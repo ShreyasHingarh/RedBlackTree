@@ -4,7 +4,15 @@
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello, World!");
+            Random gen = new Random(12);
+            RedBlack<int> redblack = new RedBlack<int>();
+            for (int i = 0; i < 10; i++)
+            {
+                redblack.Insert(gen.Next(0,100));
+            }
+            ;
+            Console.WriteLine(redblack.TreeValidation());
+            ;
         }
     }
 }
