@@ -47,18 +47,25 @@ namespace RedBlackTree
                 return true;
             }
         }
-
+        public bool HasNoChildren
+        {
+            get
+            {
+                return RightChild == null && LeftChild == null;
+            }
+        }
+        
         public Node(T value, bool isRed = true)
         {
             Value = value;
             IsRed = isRed;
         }
-        //add someway of telling what node it is
         
     }
 
     internal class RedBlack<T> where T : IComparable<T>
     {
+        
         public Node<T> Root;
         void FlipColor(Node<T> node)
         {
@@ -105,7 +112,6 @@ namespace RedBlackTree
             if (Current.IsRed == false && Current.HasLeft && Current.HasRight && Current.LeftChild.IsRed == true && Current.RightChild.IsRed == true)
             {
                 FlipColor(Current);
-                if (Root.IsRed) Root.IsRed = false;
             }
             if (Current.LeftChild != null && Current.Value.CompareTo(Value) > 0)
             {
@@ -120,7 +126,7 @@ namespace RedBlackTree
                 InsertValue(Current, Value);
                 return Current;
             }
-            if (Current.RightChild != null && Current.RightChild.IsRed)
+            if (Current.RightChild != null && Current.RightChild.IsRed && Current.RightChild.HasRight && Current.RightChild.RightChild.IsRed)
             {
                 if (Current == Root)
                 {
@@ -149,12 +155,17 @@ namespace RedBlackTree
         }
         public void Insert(T value)
         {
+            if(value.Equals(83))
+            {
+
+            }
             if (Root == null)
             {
                 Root = new Node<T>(value,false);
                 return;
             }
             Root = GoThroughTree(Root, value);
+            if (Root.IsRed) Root.IsRed = false;
             if (!TreeValidation())
             {
                 throw new Exception();
@@ -164,17 +175,28 @@ namespace RedBlackTree
         private bool RecursiveForFour(Node<T> Current, int TargetValue, int CurrentValue)
         {
             int cur = CurrentValue;
+            bool IsEqual = false;
             if(Current.HasLeft)
             {
                 if (!Current.LeftChild.IsRed) cur++;
-                RecursiveForFour(Current.LeftChild, TargetValue, cur);
+                IsEqual = RecursiveForFour(Current.LeftChild, TargetValue, cur);
+                cur = CurrentValue;
             }
             if(Current.HasRight)
             {
                 if (!Current.RightChild.IsRed) cur++;
-                RecursiveForFour(Current.RightChild, TargetValue, cur);
+                IsEqual = RecursiveForFour(Current.RightChild, TargetValue, cur);
+                cur = CurrentValue;
             }
-            if()
+            if(Current.HasNoChildren)
+            {   
+                IsEqual = cur == TargetValue;
+            }
+            else
+            {
+                cur--;
+            }
+            return IsEqual;
             
         }
         private bool RuleFourValidation()
@@ -189,7 +211,7 @@ namespace RedBlackTree
                 if(!temp.IsRed) TargetValue++;
                 temp = temp.LeftChild;
             }
-            return RecursiveForFour(Root,TargetValue);
+            return RecursiveForFour(Root,TargetValue,1);
         }
         private bool RuleThreeCheck()
         {
@@ -222,7 +244,9 @@ namespace RedBlackTree
         
         public bool TreeValidation()
         {
-            return !Root.IsRed && RuleThreeCheck() && RuleFourValidation();
+            bool Rule3 = RuleThreeCheck();
+            bool Rule4 = RuleFourValidation();
+            return !Root.IsRed && Rule3 && Rule4;
         }
         
     }
