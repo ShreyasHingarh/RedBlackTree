@@ -20,15 +20,15 @@ namespace RedBlackTree
         public Node<T> RightChild;
         public Node<T> LeftChild;
         public bool IsRed;
-        public bool hasChildren
+        public bool hasTwoChildren
         {
             get
             {
-                if (RightChild == null && LeftChild == null)
+                if (RightChild != null && LeftChild != null)
                 {
-                    return false;
+                    return true;
                 }
-                return true;
+                return false;
             }
         }
         public bool HasRight
@@ -47,6 +47,7 @@ namespace RedBlackTree
                 return true;
             }
         }
+
         public Node(T value, bool isRed = true)
         {
             Value = value;
@@ -108,11 +109,11 @@ namespace RedBlackTree
             }
             if (Current.LeftChild != null && Current.Value.CompareTo(Value) > 0)
             {
-                GoThroughTree(Current.LeftChild, Value);
+                Current.LeftChild = GoThroughTree(Current.LeftChild, Value);
             }
             else if (Current.RightChild != null && Current.Value.CompareTo(Value) <= 0)
             {
-               GoThroughTree(Current.RightChild, Value);
+               Current.RightChild = GoThroughTree(Current.RightChild, Value);
             }
             else
             {
@@ -131,7 +132,7 @@ namespace RedBlackTree
                     Current = RotateLeft(Current);
                 }
             }
-            if (Current.LeftChild != null && Current.LeftChild.IsRed && Current.LeftChild.LeftChild.IsRed)
+            if (Current.LeftChild != null && Current.LeftChild.LeftChild != null && Current.LeftChild.IsRed && Current.LeftChild.LeftChild.IsRed)
             {
                 if (Current == Root)
                 {
@@ -153,64 +154,42 @@ namespace RedBlackTree
                 Root = new Node<T>(value,false);
                 return;
             }
-            GoThroughTree(Root, value);
+            Root = GoThroughTree(Root, value);
+            if (!TreeValidation())
+            {
+                throw new Exception();
+            }
         }
         
+        private bool RecursiveForFour(Node<T> Current, int TargetValue, int CurrentValue)
+        {
+            int cur = CurrentValue;
+            if(Current.HasLeft)
+            {
+                if (!Current.LeftChild.IsRed) cur++;
+                RecursiveForFour(Current.LeftChild, TargetValue, cur);
+            }
+            if(Current.HasRight)
+            {
+                if (!Current.RightChild.IsRed) cur++;
+                RecursiveForFour(Current.RightChild, TargetValue, cur);
+            }
+            if()
+            
+        }
         private bool RuleFourValidation()
         {
-            int NumberToCheckAgainst = -1;
-            int CurrentValue = 0;
-            Stack<Node<T>> stack = new Stack<Node<T>>();
-            stack.Push(Root);
-
-
-            while (stack.Count != 0)
+            //make this into recursion
+            // figure out target value 
+            //do recursion and compare current to target value
+            int TargetValue = 0;
+            Node<T> temp = Root;
+            while(temp != null)
             {
-                Node<T> current = stack.Pop();
-                bool hasRemoved = false;
-                if (!current.IsRed)
-                {
-                    CurrentValue++;
-                }
-                if (current.LeftChild != null)
-                {
-                    stack.Push(current.LeftChild);
-                }
-                else
-                {
-                    if (NumberToCheckAgainst == -1)
-                    {
-                        NumberToCheckAgainst = CurrentValue;
-                    }
-                    else if (NumberToCheckAgainst != CurrentValue) return false;
-                    if (!hasRemoved && !current.IsRed)
-                    {
-                        CurrentValue--;
-                        hasRemoved = true;
-                    }
-                }
-                if (current.RightChild != null)
-                {
-                    stack.Push(current.RightChild);
-                }
-                else
-                {
-                    if (NumberToCheckAgainst == -1)
-                    {
-                        NumberToCheckAgainst = CurrentValue;
-                    }
-                    else if (NumberToCheckAgainst != CurrentValue) return false;
-                    if (!hasRemoved && !current.IsRed)
-                    {
-                        CurrentValue--;
-                        hasRemoved = true;
-                    }
-                }
-
-                
+                if(!temp.IsRed) TargetValue++;
+                temp = temp.LeftChild;
             }
-
-            return true;
+            return RecursiveForFour(Root,TargetValue);
         }
         private bool RuleThreeCheck()
         {
@@ -233,7 +212,8 @@ namespace RedBlackTree
                     if (current.IsRed && current.RightChild.IsRed) return false;
                     stack.Push(current.RightChild);
                 }
-                if (current.hasChildren && !current.IsRed && current.RightChild.IsRed && !current.LeftChild.IsRed) return false;
+                //Rule 5 check
+                if (current.hasTwoChildren && !current.IsRed && current.RightChild.IsRed && !current.LeftChild.IsRed) return false;
                 
             }
             return true;
@@ -242,11 +222,7 @@ namespace RedBlackTree
         
         public bool TreeValidation()
         {
-            //Rule 6: nodes must be full    
-            if (Root.IsRed) return false;
-            if (!RuleThreeCheck()) return false;
-            if (!RuleFourValidation()) return false;
-            return true;
+            return !Root.IsRed && RuleThreeCheck() && RuleFourValidation();
         }
         
     }
