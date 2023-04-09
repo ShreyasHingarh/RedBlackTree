@@ -6,9 +6,13 @@
         {
             Random gen = new Random(12);
             RedBlack<int> redblack = new RedBlack<int>();
+            List<int> numsadded = new List<int>();
             for (int i = 0; i < 100; i++)
             {
-                redblack.Insert(gen.Next(0,100));
+                int num = gen.Next(0, 100);
+                if (numsadded.Contains(num)) continue;
+                redblack.Insert(num);
+                numsadded.Add(num);
             }
             ;
             Console.WriteLine(redblack.TreeValidation());

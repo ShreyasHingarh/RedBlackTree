@@ -126,38 +126,57 @@ namespace RedBlackTree
                 InsertValue(Current, Value);
                 return Current;
             }
-            if (Current.RightChild != null && Current.RightChild.IsRed && Current.RightChild.HasRight && Current.RightChild.RightChild.IsRed)
+            //Rotating to Balance
+            if(Current.HasRight && Current.RightChild.HasLeft && Current.RightChild.IsRed && Current.RightChild.LeftChild.IsRed)
             {
-                if (Current == Root)
+                Node<T> CopyOfCur = Current;
+                Node<T> temp = Current.RightChild;
+                Current.RightChild = null;
+                temp.IsRed = Current.IsRed;
+                Current.IsRed = !Current.IsRed;
+                temp.LeftChild.LeftChild = Current;
+                Current = temp;
+                if (CopyOfCur == Root) Root = Current;
+            }
+            else if(Current.HasLeft && Current.LeftChild.HasRight && Current.LeftChild.IsRed && Current.LeftChild.RightChild.IsRed)
+            {
+                Node<T> CopyOfCur = Current;
+                Node<T> temp = Current.LeftChild;
+                Current.LeftChild = null;
+                temp.IsRed = Current.IsRed;
+                Current.IsRed = !Current.IsRed;
+                temp.RightChild.RightChild = Current;
+                Current = temp;
+                if (CopyOfCur == Root) Root = Current;
+            }
+            if ((Current.HasRight && Current.RightChild.IsRed && Current.RightChild.HasRight && Current.RightChild.RightChild.IsRed) 
+                || Current.hasTwoChildren && Current.RightChild.IsRed && !Current.LeftChild.IsRed)  //Rotating To Be LeftLeaning
+            {
+                Node<T> CopyOfCur = Current;
+                Current = RotateLeft(Current);
+
+                if (CopyOfCur == Root)
                 {
-                    Current = RotateLeft(Current);
-                    Root = Current;
-                }
-                else
-                {
-                    Current = RotateLeft(Current);
+                     Root = Current;
                 }
             }
-            if (Current.LeftChild != null && Current.LeftChild.LeftChild != null && Current.LeftChild.IsRed && Current.LeftChild.LeftChild.IsRed)
+            else if (Current.HasLeft && Current.LeftChild.LeftChild != null && Current.LeftChild.IsRed && Current.LeftChild.LeftChild.IsRed)
             {
-                if (Current == Root)
-                {
-                    Current = RotateRight(Current);
+                Node<T> CopyOfCur = Current;
+                Current = RotateRight(Current);
+                if (CopyOfCur == Root)
+                {  
                     Root = Current;
                 }
-                else
-                {
-                    Current = RotateRight(Current);
-                }
-               
             }
+          
+           
             return Current;
         }
         public void Insert(T value)
         {
-            if(value.Equals(83))
+            if(value.Equals(88))
             {
-
             }
             if (Root == null)
             {
