@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace RedBlackTree
 {
@@ -70,8 +72,14 @@ namespace RedBlackTree
         void FlipColor(Node<T> node)
         {
             node.IsRed = true;
-            node.LeftChild.IsRed = false;
-            node.RightChild.IsRed = false;
+            if(node.HasLeft)
+            {
+                node.LeftChild.IsRed = false;
+            }
+            if(node.HasRight)
+            {
+                node.RightChild.IsRed = false;
+            }
         }
         void InsertValue(Node<T> Current, T Value)
         {
@@ -190,18 +198,78 @@ namespace RedBlackTree
                 throw new Exception();
             }
         }
-        private void FixUp()
+        private Node<T> FixUp(Node<T> Current)
         {
+            //Enforce Left Leaning Policy: See a red node on the right? Rotate left!
+            if (Current.HasRight && Current.RightChild.IsRed)
+            {
+                Current = RotateLeft(Current);
+            }
+            
+           // Balance 4 - nodes: Did we just unbalance a 4 - node ? Rotate it back to the right!
 
-        }
-        public void Remove(Node<T> node)
-        {
-            RecursiveRemove(Root,node);
-            FixUp();
-        }
-        private void MoveRedLeft()
-        {
+            if(Current.hasTwoChildren && Current.LeftChild.IsRed && Current.RightChild.IsRed)
+            {
+                FlipColor(Current);
+            }
+            if(Current.HasLeft && Current.LeftChild.HasRight && Current.LeftChild.RightChild.IsRed)
+            {
+                Current.LeftChild = RotateLeft(Current.LeftChild);
 
+            }
+            return Current;
+        }
+        private Node<T> Search(T Value)
+        {
+            Node<T> cur = Root;
+            if(Root.Value.Equals(Value))
+            {
+                return Root;
+            }
+            while(!cur.HasNoChildren)
+            {
+                if(cur.Value.Equals(Value))
+                {
+                    return cur;
+                }
+                if(cur.HasLeft && cur.Value.CompareTo(Value) > 0)
+                {
+                    cur = cur.LeftChild;
+                }
+                else if(cur.HasRight && cur.Value.CompareTo(Value) <= 0)
+                {
+                    cur = cur.RightChild; 
+                }
+            }
+            return null;
+        }
+        private bool Contains(T Value)
+        {
+            return Search(Value) != null;
+        }
+        public bool Remove(Node<T> node)
+        {
+            if (Search(node.Value) != null)
+            {
+                Root = RecursiveRemove(Root, node);
+                return true;
+            }
+            return false;
+        }
+        private Node<T> MoveRedLeft(Node<T> Current)
+        {
+            FlipColor(Current);
+            if(Current.HasRight && Current.RightChild.HasLeft && Current.RightChild.IsRed && Current.RightChild.LeftChild.IsRed)
+            {
+                Current.RightChild = RotateRight(Current.RightChild);
+                Current = RotateLeft(Current);
+                FlipColor(Current);
+                if(Current.RightChild.RightChild.IsRed)
+                {
+                    Current.RightChild = RotateLeft(Current.RightChild);
+                }
+            }
+            return Current;
         }
         private void MoveRedRight(Node<T> Current)
         {
@@ -223,25 +291,32 @@ namespace RedBlackTree
             }
             return Node;
         }
-        private bool BSTDelete(Node<T> NodeToLookFor)
+        private bool RecursiveBSTDelete(Node<T> NodeToLookFor, Node<T> Current)
         {
-            //MakeRecursively
-
+            if(Current.LeftChild != NodeToLookFor)
+            {
+                return RecursiveBSTDelete(NodeToLookFor, Current.LeftChild);
+            }
+            else if(Current.LeftChild == null)
+            {
+                return false;
+            }
+            Current.LeftChild = null;
             return true;
         }
-        private bool RecursiveRemove(Node<T> Current, Node<T> NodeToLookFor)
+              
+        private Node<T> RecursiveRemove(Node<T> Current, Node<T> NodeToLookFor)
         {
-            bool DidRemove = false;
             //Go Left
             if (Current.HasLeft && NodeToLookFor.Value.CompareTo(Current.Value) < 0)
             {
                 if(Current.HasLeft && Current.LeftChild.HasLeft && !Current.LeftChild.IsRed && !Current.LeftChild.LeftChild.IsRed)
                 {
-                    MoveRedLeft();
+                    Current = MoveRedLeft(Current);
                 }
-                DidRemove = RecursiveRemove(Current.LeftChild, NodeToLookFor);
-                
+                Current.LeftChild = RecursiveRemove(Current.LeftChild, NodeToLookFor);
             }
+
             //Go Right or current is the one to delete
             else if (NodeToLookFor.Value.CompareTo(Current.Value) > 0 || Current == NodeToLookFor)
             {
@@ -256,24 +331,24 @@ namespace RedBlackTree
                 }
                 if (Current.HasNoChildren && Current == NodeToLookFor)
                 {
-                    return true;
+                    return null;
                 }
-                //if value is still on the right
+                //NOT FOUND ON RIGHT
                 if (Current.HasRight && NodeToLookFor.Value.CompareTo(Current.Value) > 0)
                 {
                     if (Current.RightChild.HasLeft && Current.RightChild.LeftChild.HasLeft &&
                         !Current.RightChild.LeftChild.IsRed )// if right child is a 2-node
                     {
-                        MoveRedRight();
+                        MoveRedRight(Current);
                     }
-                    DidRemove = RecursiveRemove(Current.RightChild, NodeToLookFor);
+                    Current.RightChild = RecursiveRemove(Current.RightChild, NodeToLookFor);
                 }
                 else
                 {//In case of internal 3-node or 4-node
                     if (Current.RightChild.HasLeft && Current.RightChild.LeftChild.HasLeft &&
                             !Current.RightChild.LeftChild.IsRed && !Current.RightChild.LeftChild.LeftChild.IsRed)// if right child is a 2-node
                     {
-                        MoveRedRight();
+                        MoveRedRight(Current);
                     }
 
                     //Find Right SubTree's MinimumValue: From Current Go right once and than left till can't anymore
@@ -282,23 +357,17 @@ namespace RedBlackTree
                     T temp = NodeToLookFor.Value;
                     NodeToLookFor.Value = MinimumNode.Value;
                     MinimumNode.Value = temp;
-                    
-                    return BSTDelete(MinimumNode);
+                    if (Current.HasNoChildren && Current.RightChild == NodeToLookFor)
+                    {
+                        return null;
+                    }
+                    RecursiveBSTDelete(MinimumNode, Current.RightChild);
+                    FixUp(Current);
+                    return Current;
                 }
             }
-            //Remove the Node from its parent; 
-            if(Current.HasLeft && Current.LeftChild == NodeToLookFor)
-            {
-                Current.LeftChild = null;
-                return true;
-            }
-            else if (Current.HasRight && Current.RightChild == NodeToLookFor)
-            {
-                Current.RightChild = null;
-                return true;
-            }
-
-            return DidRemove;
+            FixUp(Current);
+            return Current;
         }
 
 
