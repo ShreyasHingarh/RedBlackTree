@@ -65,7 +65,7 @@ namespace RedBlackTree
 
     internal class RedBlack<T> where T : IComparable<T>
     {
-        
+
         public Node<T> Root;
         void FlipColor(Node<T> node)
         {
@@ -75,7 +75,7 @@ namespace RedBlackTree
         }
         void InsertValue(Node<T> Current, T Value)
         {
-            if ( Current.Value.CompareTo(Value) > 0)
+            if (Current.Value.CompareTo(Value) > 0)
             {
                 Current.LeftChild = new Node<T>(Value);
             }
@@ -108,7 +108,7 @@ namespace RedBlackTree
         }
         private Node<T> GoThroughTree(Node<T> Current, T Value)
         {
-            
+
             if (Current.IsRed == false && Current.HasLeft && Current.HasRight && Current.LeftChild.IsRed == true && Current.RightChild.IsRed == true)
             {
                 FlipColor(Current);
@@ -119,7 +119,7 @@ namespace RedBlackTree
             }
             else if (Current.RightChild != null && Current.Value.CompareTo(Value) <= 0)
             {
-               Current.RightChild = GoThroughTree(Current.RightChild, Value);
+                Current.RightChild = GoThroughTree(Current.RightChild, Value);
             }
             else
             {
@@ -127,7 +127,7 @@ namespace RedBlackTree
                 return Current;
             }
             //Rotating to Balance
-            if(Current.HasRight && Current.RightChild.HasLeft && Current.RightChild.IsRed && Current.RightChild.LeftChild.IsRed)
+            if (Current.HasRight && Current.RightChild.HasLeft && Current.RightChild.IsRed && Current.RightChild.LeftChild.IsRed)
             {
                 Node<T> CopyOfCur = Current;
                 Node<T> temp = Current.RightChild;
@@ -138,7 +138,7 @@ namespace RedBlackTree
                 Current = temp;
                 if (CopyOfCur == Root) Root = Current;
             }
-            else if(Current.HasLeft && Current.LeftChild.HasRight && Current.LeftChild.IsRed && Current.LeftChild.RightChild.IsRed)
+            else if (Current.HasLeft && Current.LeftChild.HasRight && Current.LeftChild.IsRed && Current.LeftChild.RightChild.IsRed)
             {
                 Node<T> CopyOfCur = Current;
                 Node<T> temp = Current.LeftChild;
@@ -149,7 +149,7 @@ namespace RedBlackTree
                 Current = temp;
                 if (CopyOfCur == Root) Root = Current;
             }
-            if ((Current.HasRight && Current.RightChild.IsRed && Current.RightChild.HasRight && Current.RightChild.RightChild.IsRed) 
+            if ((Current.HasRight && Current.RightChild.IsRed && Current.RightChild.HasRight && Current.RightChild.RightChild.IsRed)
                 || Current.hasTwoChildren && Current.RightChild.IsRed && !Current.LeftChild.IsRed)  //Rotating To Be LeftLeaning
             {
                 Node<T> CopyOfCur = Current;
@@ -157,7 +157,7 @@ namespace RedBlackTree
 
                 if (CopyOfCur == Root)
                 {
-                     Root = Current;
+                    Root = Current;
                 }
             }
             else if (Current.HasLeft && Current.LeftChild.LeftChild != null && Current.LeftChild.IsRed && Current.LeftChild.LeftChild.IsRed)
@@ -165,22 +165,22 @@ namespace RedBlackTree
                 Node<T> CopyOfCur = Current;
                 Current = RotateRight(Current);
                 if (CopyOfCur == Root)
-                {  
+                {
                     Root = Current;
                 }
             }
-          
-           
+
+
             return Current;
         }
         public void Insert(T value)
         {
-            if(value.Equals(88))
+            if (value.Equals(88))
             {
             }
             if (Root == null)
             {
-                Root = new Node<T>(value,false);
+                Root = new Node<T>(value, false);
                 return;
             }
             Root = GoThroughTree(Root, value);
@@ -190,7 +190,118 @@ namespace RedBlackTree
                 throw new Exception();
             }
         }
-        
+        private void FixUp()
+        {
+
+        }
+        public void Remove(Node<T> node)
+        {
+            RecursiveRemove(Root,node);
+            FixUp();
+        }
+        private void MoveRedLeft()
+        {
+
+        }
+        private void MoveRedRight(Node<T> Current)
+        {
+            if(!Current.LeftChild.LeftChild.IsRed)
+            {
+                FlipColor(Current);
+                return;
+            }
+            FlipColor(Current);
+            Current = RotateRight(Current);
+            FlipColor(Current);
+        }
+        private Node<T> FindMinimumNode(Node<T> Node)
+        {
+            
+            while(Node.HasLeft)
+            {
+                Node = Node.LeftChild;
+            }
+            return Node;
+        }
+        private bool BSTDelete(Node<T> NodeToLookFor)
+        {
+            //MakeRecursively
+
+            return true;
+        }
+        private bool RecursiveRemove(Node<T> Current, Node<T> NodeToLookFor)
+        {
+            bool DidRemove = false;
+            //Go Left
+            if (Current.HasLeft && NodeToLookFor.Value.CompareTo(Current.Value) < 0)
+            {
+                if(Current.HasLeft && Current.LeftChild.HasLeft && !Current.LeftChild.IsRed && !Current.LeftChild.LeftChild.IsRed)
+                {
+                    MoveRedLeft();
+                }
+                DidRemove = RecursiveRemove(Current.LeftChild, NodeToLookFor);
+                
+            }
+            //Go Right or current is the one to delete
+            else if (NodeToLookFor.Value.CompareTo(Current.Value) > 0 || Current == NodeToLookFor)
+            {
+                if(Current.HasLeft && Current.LeftChild.IsRed)
+                {
+                    Node<T> CopyOfCur = Current;
+                    Current = RotateRight(Current);
+                    if(CopyOfCur == Root)
+                    {
+                        Root = Current;
+                    }
+                }
+                if (Current.HasNoChildren && Current == NodeToLookFor)
+                {
+                    return true;
+                }
+                //if value is still on the right
+                if (Current.HasRight && NodeToLookFor.Value.CompareTo(Current.Value) > 0)
+                {
+                    if (Current.RightChild.HasLeft && Current.RightChild.LeftChild.HasLeft &&
+                        !Current.RightChild.LeftChild.IsRed )// if right child is a 2-node
+                    {
+                        MoveRedRight();
+                    }
+                    DidRemove = RecursiveRemove(Current.RightChild, NodeToLookFor);
+                }
+                else
+                {//In case of internal 3-node or 4-node
+                    if (Current.RightChild.HasLeft && Current.RightChild.LeftChild.HasLeft &&
+                            !Current.RightChild.LeftChild.IsRed && !Current.RightChild.LeftChild.LeftChild.IsRed)// if right child is a 2-node
+                    {
+                        MoveRedRight();
+                    }
+
+                    //Find Right SubTree's MinimumValue: From Current Go right once and than left till can't anymore
+                    // replace the NodeToLookFor.Value with the nodelandedon.value 
+                    Node<T> MinimumNode = FindMinimumNode(Current.RightChild);
+                    T temp = NodeToLookFor.Value;
+                    NodeToLookFor.Value = MinimumNode.Value;
+                    MinimumNode.Value = temp;
+                    
+                    return BSTDelete(MinimumNode);
+                }
+            }
+            //Remove the Node from its parent; 
+            if(Current.HasLeft && Current.LeftChild == NodeToLookFor)
+            {
+                Current.LeftChild = null;
+                return true;
+            }
+            else if (Current.HasRight && Current.RightChild == NodeToLookFor)
+            {
+                Current.RightChild = null;
+                return true;
+            }
+
+            return DidRemove;
+        }
+
+
         private bool RecursiveForFour(Node<T> Current, int TargetValue, int CurrentValue)
         {
             int cur = CurrentValue;
