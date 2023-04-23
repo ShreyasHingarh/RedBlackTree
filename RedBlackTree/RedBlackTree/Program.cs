@@ -5,16 +5,26 @@
         static void Main(string[] args)
         {
             Random gen = new Random(12);
-            RedBlack<int> redblack = new RedBlack<int>();
-            List<int> numsadded = new List<int>();
-            for (int i = 0; i < 100; i++)
+            RedBlack<char> redblack = new RedBlack<char>();
+
+            for (int i = 0; i < 26; i++)
             {
-                int num = gen.Next(0, 100);
-                if (numsadded.Contains(num)) continue;
-                redblack.Insert(num);
-                numsadded.Add(num);
+                redblack.Insert((char)(65+i));
             }
             ;
+            Console.WriteLine(redblack.TreeValidation());
+            ;
+
+            redblack.Remove(redblack.Search('E'));
+            Console.WriteLine(redblack.TreeValidation());
+            ;
+            redblack.Remove(redblack.Search('A'));
+            Console.WriteLine(redblack.TreeValidation());
+            ;
+            redblack.Remove(redblack.Search('Y'));
+            Console.WriteLine(redblack.TreeValidation());
+            ;
+            redblack.Remove(redblack.Search('L'));
             Console.WriteLine(redblack.TreeValidation());
             ;
         }
