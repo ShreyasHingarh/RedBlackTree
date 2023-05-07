@@ -7,7 +7,7 @@
             Random gen = new Random(12);
             RedBlack<char> redblack = new RedBlack<char>();
 
-            for (int i = 0; i < 26; i++)
+            for (int i = 0; i < 10; i++)
             {
                 redblack.Insert((char)(65+i));
             }
@@ -18,13 +18,13 @@
             redblack.Remove(redblack.Search('E'));
             Console.WriteLine(redblack.TreeValidation());
             ;
-            redblack.Remove(redblack.Search('A'));
+            redblack.Remove(redblack.Search('F'));
             Console.WriteLine(redblack.TreeValidation());
             ;
-            redblack.Remove(redblack.Search('Y'));
+            redblack.Remove(redblack.Search('D'));
             Console.WriteLine(redblack.TreeValidation());
             ;
-            redblack.Remove(redblack.Search('L'));
+            redblack.Remove(redblack.Search('B'));
             Console.WriteLine(redblack.TreeValidation());
             ;
         }
