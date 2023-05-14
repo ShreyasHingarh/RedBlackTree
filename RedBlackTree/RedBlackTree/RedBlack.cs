@@ -134,10 +134,9 @@ namespace RedBlackTree
                 temp.RightChild.RightChild = Current;
                 Current = temp;
             }
-            if (Current.HasRight && Current.RightChild.IsRed )  //Rotating To Be LeftLeaning
+            if (Current.HasRight && Current.RightChild.IsRed)  //Rotating To Be LeftLeaning
             {
                 Current = RotateLeft(Current);
-
             }
             if (Current.HasLeft && Current.LeftChild.LeftChild != null && Current.LeftChild.IsRed && Current.LeftChild.LeftChild.IsRed)
             {
@@ -191,23 +190,29 @@ namespace RedBlackTree
         }
         private Node<T> FixUp(Node<T> Current)
         {
+            
+            if(Current.HasRight && Current.IsRed && !Current.RightChild.IsRed && !Current.HasLeft && Current.RightChild.HasNoChildren)
+            {
+                FlipColor(Current);
+            }
             //Enforce Left Leaning Policy: See a red node on the right? Rotate left!
             if (Current.HasRight && Current.RightChild.IsRed)
             {
-                Current = RotateLeft(Current);
-                
+                Current = RotateLeft(Current);   
             }
+            //Balance 4-nodes
             Current = RotatingChecks(Current);
-            
+            //Break Up 4-Nodes
             if(Current.hasTwoChildren && Current.LeftChild.IsRed && Current.RightChild.IsRed)
             {
                 FlipColor(Current);
             }
+            //Another check for right leaning nodes
             if(Current.HasLeft && Current.LeftChild.HasRight && Current.LeftChild.RightChild.IsRed)
             {
                 Current.LeftChild = RotateLeft(Current.LeftChild);
             }
-
+            
             return Current;
         }
         public Node<T> Search(T Value)
@@ -280,8 +285,7 @@ namespace RedBlackTree
             FlipColor(Current);
         }
         private Node<T> FindMinimumNode(Node<T> Node)
-        {
-            
+        {   
             while(Node.HasLeft)
             {
                 Node = Node.LeftChild;
@@ -334,9 +338,9 @@ namespace RedBlackTree
                 if (Current.HasRight && NodeToLookFor.Value.CompareTo(Current.Value) > 0)
                 {
                     if (Current.RightChild.HasLeft && Current.RightChild.LeftChild.HasLeft &&
-                        !Current.RightChild.LeftChild.IsRed )// if right child is a 2-node
+                        !Current.RightChild.LeftChild.IsRed && !Current.RightChild.LeftChild.LeftChild.IsRed)// if right child is a 2-node
                     {
-                        MoveRedRight(Current);
+                        MoveRedRight(Current.RightChild);
                     }
                     Current.RightChild = RecursiveRemove(Current.RightChild, NodeToLookFor);
                 }
@@ -345,11 +349,11 @@ namespace RedBlackTree
                     if (Current.RightChild.HasLeft && Current.RightChild.LeftChild.HasLeft &&
                             !Current.RightChild.LeftChild.IsRed && !Current.RightChild.LeftChild.LeftChild.IsRed)// if right child is a 2-node
                     {
-                        MoveRedRight(Current);
+                        MoveRedRight(Current.RightChild);
                     }
 
                     //Find Right SubTree's MinimumValue: From Current Go right once and than left till can't anymore
-                    // replace the NodeToLookFor.Value with the nodelandedon.value 
+                    
                     Node<T> MinimumNode = FindMinimumNode(Current.RightChild);
                     T temp = NodeToLookFor.Value;
                     NodeToLookFor.Value = MinimumNode.Value;
@@ -361,9 +365,10 @@ namespace RedBlackTree
                     }
                     else
                     {
+                        //Problem: Goes back to root once done removing the previous root value, Should go to H first and rotate then.
                         RecursiveBSTDelete(MinimumNode, Current.RightChild);
                     }
-                    FixUp(Current);
+                    Current = FixUp(Current);
                     return Current;
                 }
             }
