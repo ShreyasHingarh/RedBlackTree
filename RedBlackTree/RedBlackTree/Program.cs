@@ -7,7 +7,7 @@
             Random gen = new Random(12);
             RedBlack<char> redblack = new RedBlack<char>();
 
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 15; i++)
             {
                 redblack.Insert((char)(65+i));
             }

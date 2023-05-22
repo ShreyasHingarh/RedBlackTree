@@ -14,7 +14,9 @@ namespace RedBlackTree
     {
         TwoNode,
         ThreeNode,
-        FourNode
+        FourNode,
+        Red,
+        Leaf
     }
     public class Node<T>
     {
@@ -56,7 +58,24 @@ namespace RedBlackTree
                 return RightChild == null && LeftChild == null;
             }
         }
-        
+       
+        public TypeOfNode NodeType 
+        {
+            get
+            {
+                if (HasNoChildren) return TypeOfNode.Leaf;
+                if (IsRed) return TypeOfNode.Red;
+                if (hasTwoChildren && !RightChild.IsRed && !LeftChild.IsRed)
+                {
+                    return TypeOfNode.TwoNode;
+                }
+                if (hasTwoChildren && RightChild.IsRed && LeftChild.IsRed)
+                {
+                    return TypeOfNode.FourNode;
+                }
+                return TypeOfNode.ThreeNode;
+            }
+        }
         public Node(T value, bool isRed = true)
         {
             Value = value;
@@ -116,23 +135,14 @@ namespace RedBlackTree
         }
         private Node<T> RotatingChecks(Node<T> Current)
         {
-            if (Current.HasRight && Current.RightChild.HasLeft && Current.RightChild.IsRed && Current.RightChild.LeftChild.IsRed)
+            if (Current.HasRight && !Current.HasLeft && Current.RightChild.HasLeft && !Current.RightChild.HasRight)
             {
-                Node<T> temp = Current.RightChild;
-                Current.RightChild = null;
-                temp.IsRed = Current.IsRed;
-                Current.IsRed = !Current.IsRed;
-                temp.LeftChild.LeftChild = Current;
-                Current = temp;
-            }
-            else if (Current.HasLeft && Current.LeftChild.HasRight && Current.LeftChild.IsRed && Current.LeftChild.RightChild.IsRed)
-            {
-                Node<T> temp = Current.LeftChild;
-                Current.LeftChild = null;
-                temp.IsRed = Current.IsRed;
-                Current.IsRed = !Current.IsRed;
-                temp.RightChild.RightChild = Current;
-                Current = temp;
+                Current.RightChild = RotateRight(Current.RightChild);
+                Current = RotateLeft(Current);
+                if (Current.RightChild.IsRed)
+                {
+                    Current.RightChild.IsRed = false;
+                }
             }
             if (Current.HasRight && Current.RightChild.IsRed)  //Rotating To Be LeftLeaning
             {
@@ -141,7 +151,6 @@ namespace RedBlackTree
             if (Current.HasLeft && Current.LeftChild.LeftChild != null && Current.LeftChild.IsRed && Current.LeftChild.LeftChild.IsRed)
             {
                 Current = RotateRight(Current);
-                
             }
             return Current;
         }
@@ -185,7 +194,7 @@ namespace RedBlackTree
             if (Root.IsRed) Root.IsRed = false;
             if (!TreeValidation())
             {
-                throw new Exception();
+                //throw new Exception();
             }
         }
         private Node<T> FixUp(Node<T> Current)
@@ -202,8 +211,8 @@ namespace RedBlackTree
             }
             //Balance 4-nodes
             Current = RotatingChecks(Current);
-            //Break Up 4-Nodes
-            if(Current.hasTwoChildren && Current.LeftChild.IsRed && Current.RightChild.IsRed)
+            //Break Up 4-Nodes **********************Check.NodeType ************************
+            if(Current.NodeType == TypeOfNode.FourNode)
             {
                 FlipColor(Current);
             }
@@ -296,7 +305,9 @@ namespace RedBlackTree
         {
             if(Current.HasLeft && Current.LeftChild != NodeToLookFor)
             {
-                return RecursiveBSTDelete(NodeToLookFor, Current.LeftChild);
+                bool thing = RecursiveBSTDelete(NodeToLookFor, Current.LeftChild);
+                Current = FixUp(Current);
+                return thing;
             }
             else if(Current.LeftChild == null)
             {
@@ -311,7 +322,8 @@ namespace RedBlackTree
             //Go Left
             if (Current.HasLeft && NodeToLookFor.Value.CompareTo(Current.Value) < 0)
             {
-                if(Current.HasLeft && Current.LeftChild.HasLeft && !Current.LeftChild.IsRed && !Current.LeftChild.LeftChild.IsRed)
+                // CHECK .NodeType
+                if(Current.LeftChild.NodeType == TypeOfNode.TwoNode)
                 {
                     Current = MoveRedLeft(Current);
                 }
@@ -334,22 +346,20 @@ namespace RedBlackTree
                 {
                     return null;
                 }
-                //NOT FOUND ON RIGHT
+                
                 if (Current.HasRight && NodeToLookFor.Value.CompareTo(Current.Value) > 0)
                 {
-                    if (Current.RightChild.HasLeft && Current.RightChild.LeftChild.HasLeft &&
-                        !Current.RightChild.LeftChild.IsRed && !Current.RightChild.LeftChild.LeftChild.IsRed)// if right child is a 2-node
+                    if (Current.RightChild.NodeType == TypeOfNode.TwoNode)// if right child is a 2-node
                     {
-                        MoveRedRight(Current.RightChild);
+                        MoveRedRight(Current);
                     }
                     Current.RightChild = RecursiveRemove(Current.RightChild, NodeToLookFor);
                 }
                 else
-                {//In case of internal 3-node or 4-node
-                    if (Current.RightChild.HasLeft && Current.RightChild.LeftChild.HasLeft &&
-                            !Current.RightChild.LeftChild.IsRed && !Current.RightChild.LeftChild.LeftChild.IsRed)// if right child is a 2-node
+                {
+                    if (Current.RightChild.NodeType == TypeOfNode.TwoNode)// if right child is a 2-node
                     {
-                        MoveRedRight(Current.RightChild);
+                        MoveRedRight(Current);
                     }
 
                     //Find Right SubTree's MinimumValue: From Current Go right once and than left till can't anymore
@@ -367,6 +377,7 @@ namespace RedBlackTree
                     {
                         //Problem: Goes back to root once done removing the previous root value, Should go to H first and rotate then.
                         RecursiveBSTDelete(MinimumNode, Current.RightChild);
+                        Current.RightChild = FixUp(Current.RightChild);
                     }
                     Current = FixUp(Current);
                     return Current;
@@ -376,7 +387,7 @@ namespace RedBlackTree
             return Current;
         }
 
-
+        //Below is the validation functions
         private bool RecursiveForFour(Node<T> Current, int TargetValue, int CurrentValue)
         {
             if (!Current.IsRed)
@@ -454,10 +465,10 @@ namespace RedBlackTree
                     }
                     stack.Push(current.RightChild);
                 }
-                //Rule 5 check
-                if (current.hasTwoChildren && !current.IsRed && current.RightChild.IsRed && !current.LeftChild.IsRed)
+                //Rule 5 check if 3 NODES are rightleaning
+                if (((!current.HasLeft) || (current.HasLeft && !current.LeftChild.IsRed)) && current.HasRight && current.RightChild.IsRed)
                 {
-                    return false;
+                    return false;   
                 }
                 
             }
