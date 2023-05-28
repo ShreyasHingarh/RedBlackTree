@@ -64,7 +64,7 @@ namespace RedBlackTree
             get
             {
                 if (HasNoChildren) return TypeOfNode.Leaf;
-                if (IsRed) return TypeOfNode.Red;
+                
                 if (hasTwoChildren && !RightChild.IsRed && !LeftChild.IsRed)
                 {
                     return TypeOfNode.TwoNode;
@@ -73,6 +73,7 @@ namespace RedBlackTree
                 {
                     return TypeOfNode.FourNode;
                 }
+                if (IsRed) return TypeOfNode.Red;
                 return TypeOfNode.ThreeNode;
             }
         }
@@ -84,7 +85,7 @@ namespace RedBlackTree
         
     }
 
-    internal class RedBlack<T> where T : IComparable<T>
+    public class RedBlack<T> where T : IComparable<T>
     {
         public int Count;
         public Node<T> Root;
@@ -135,6 +136,7 @@ namespace RedBlackTree
         }
         private Node<T> RotatingChecks(Node<T> Current)
         {
+
             if (Current.HasRight && !Current.HasLeft && Current.RightChild.HasLeft && !Current.RightChild.HasRight)
             {
                 Current.RightChild = RotateRight(Current.RightChild);
@@ -144,7 +146,7 @@ namespace RedBlackTree
                     Current.RightChild.IsRed = false;
                 }
             }
-            if (Current.HasRight && Current.RightChild.IsRed)  //Rotating To Be LeftLeaning
+            if (Current.NodeType != TypeOfNode.FourNode && Current.HasRight && Current.RightChild.IsRed)  //Rotating To Be LeftLeaning
             {
                 Current = RotateLeft(Current);
             }
@@ -204,18 +206,20 @@ namespace RedBlackTree
             {
                 FlipColor(Current);
             }
-            //Enforce Left Leaning Policy: See a red node on the right? Rotate left!
-            if (Current.HasRight && Current.RightChild.IsRed)
-            {
-                Current = RotateLeft(Current);   
-            }
-            //Balance 4-nodes
-            Current = RotatingChecks(Current);
-            //Break Up 4-Nodes **********************Check.NodeType ************************
-            if(Current.NodeType == TypeOfNode.FourNode)
+            if (Current.NodeType == TypeOfNode.FourNode)
             {
                 FlipColor(Current);
             }
+            //Enforce Left Leaning Policy: See a red node on the right? Rotate left!
+            if (Current.NodeType != TypeOfNode.FourNode && Current.HasRight && Current.RightChild.IsRed)
+            {
+                Current = RotateLeft(Current);   
+            }
+            
+            //Balance 4-nodes
+            Current = RotatingChecks(Current);
+            //Break Up 4-Nodes **********************Check.NodeType ************************
+            
             //Another check for right leaning nodes
             if(Current.HasLeft && Current.LeftChild.HasRight && Current.LeftChild.RightChild.IsRed)
             {
@@ -258,7 +262,7 @@ namespace RedBlackTree
         }
         public bool Remove(Node<T> node)
         {
-            if (Search(node.Value) != null)
+            if (node != null)
             {
                 Root = RecursiveRemove(Root, node);
                 if (Root.IsRed) Root.IsRed = false;
@@ -333,7 +337,7 @@ namespace RedBlackTree
             //Go Right or current is the one to delete
             else if (NodeToLookFor.Value.CompareTo(Current.Value) > 0 || Current == NodeToLookFor)
             {
-                if(Current.HasLeft && Current.LeftChild.IsRed)
+                if(Current.HasLeft && Current.LeftChild.LeftChild != null && Current.LeftChild.IsRed && Current.LeftChild.LeftChild.IsRed)
                 {
                     Node<T> CopyOfCur = Current;
                     Current = RotateRight(Current);
