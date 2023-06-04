@@ -40,6 +40,10 @@ namespace depression
             bool didFail = false;
             for (int i = 0; i < 50; i++)
             {
+                if(i == 11)
+                {
+
+                }
                 int index = rand.Next(0, ints.Count);
                 red.Remove(red.Search(ints[index]));
                 ints.Remove(ints[index]);
