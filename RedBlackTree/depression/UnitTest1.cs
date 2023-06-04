@@ -40,7 +40,7 @@ namespace depression
             bool didFail = false;
             for (int i = 0; i < 50; i++)
             {
-                if(i == 11)
+                if(i == 19)
                 {
 
                 }
@@ -54,6 +54,19 @@ namespace depression
             }
             Assert.False(didFail);
 
+        }
+        [Fact]
+        public void CheckInsertOnLeft()
+        {
+            //Insert 1,2,4,3
+            Assert.True(true);
+        }
+        [Fact]
+        public void CheckInsertOnRight()
+        {
+            //Insert 4,2,5,3
+
+            Assert.True(true);
         }
     }
 }

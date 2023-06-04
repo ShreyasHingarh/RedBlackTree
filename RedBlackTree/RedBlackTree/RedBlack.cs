@@ -209,18 +209,17 @@ namespace RedBlackTree
             {
                 FlipColor(Current);
             }
-            //Enforce Left Leaning Policy: See a red node on the right? Rotate left!
+           
+
+            //Special CaseRotationChecks
             if (Current.NodeType != TypeOfNode.FourNode && Current.HasRight && Current.RightChild.IsRed)
             {
-                Current = RotateLeft(Current);   
+                Current = RotateLeft(Current);
             }
-            //Special CaseRotationChecks
-            
             if (Current.HasOnlyRight && Current.RightChild.hasTwoChildren && Current.RightChild.NodeType == TypeOfNode.FourNode)
             {
                 FlipColor(Current.RightChild);
                 Current = RotateLeft(Current);
-                Current.LeftChild = RotateLeft(Current.LeftChild);
             }
             if (Current.HasOnlyLeft && Current.LeftChild.HasOnlyLeft && Current.LeftChild.LeftChild.HasNoChildren
                 && !(Current.LeftChild.IsRed && Current.LeftChild.LeftChild.IsRed))
@@ -238,18 +237,16 @@ namespace RedBlackTree
                     Current.RightChild.IsRed = false;
                 }
             }
-
+            if (Current.HasLeft && Current.LeftChild.HasRight && Current.LeftChild.NodeType != TypeOfNode.FourNode && Current.LeftChild.RightChild.IsRed)
+            {
+                Current.LeftChild = RotateLeft(Current.LeftChild);
+            }
             Current = RotatingChecks(Current);
-
+            
             if (Current.hasTwoChildren && Current.LeftChild.HasNoChildren && Current.RightChild.HasNoChildren
                 && Current.NodeType == TypeOfNode.ThreeNode)
             {
                 Current.LeftChild.IsRed = false;
-            }
-            //Another check for right leaning nodes
-            if (Current.HasLeft && Current.LeftChild.HasRight && Current.LeftChild.RightChild.IsRed)
-            {
-                Current.LeftChild = RotateLeft(Current.LeftChild);
             }
             
             return Current;
@@ -352,15 +349,11 @@ namespace RedBlackTree
                 {
                     Node<T> CopyOfCur = Current;
                     Current = RotateRight(Current);
-                    if(CopyOfCur == Root)
-                    {
-                        Root = Current;
-                    }
+                    if(CopyOfCur == Root) Root = Current;
+                   
                 }
-                if (Current.HasNoChildren && Current == NodeToLookFor)
-                {
-                    return null;
-                }
+                if (Current.HasNoChildren && Current == NodeToLookFor) return null;
+                
                 
                 if (Current.HasRight && NodeToLookFor.Value.CompareTo(Current.Value) > 0)
                 {
@@ -377,23 +370,16 @@ namespace RedBlackTree
                         Current = MoveRedRight(Current);
                     }
 
-                    //Find Right SubTree's MinimumValue: From Current Go right once and than left till can't anymore
+                   
                     
                     Node<T> MinimumNode = FindMinimumNode(Current.RightChild);
                     T temp = NodeToLookFor.Value;
                     NodeToLookFor.Value = MinimumNode.Value;
                     MinimumNode.Value = temp;
                     NodeToLookFor = MinimumNode;
-                    if (Current.RightChild == NodeToLookFor)
-                    {
-                        Current.RightChild = null;
-                        Current.RightChild = FixUp(Current.RightChild);
-                    }
-                    else
-                    {
-                        //Problem: Goes back to root once done removing the previous root value, Should go to H first and rotate then.
-                        Current.RightChild = RecursiveRemove(Current.RightChild, NodeToLookFor);
-                    }
+                    
+                    Current.RightChild = RecursiveRemove(Current.RightChild, NodeToLookFor);
+                    
                     Current = FixUp(Current);
                     return Current;
                 }
