@@ -24,6 +24,7 @@ namespace depression
                 red.Insert(rand.Next(0,100));
             }
             Assert.True(red.TreeValidation());
+            Assert.True(red.Count == 50);
         }
         [Fact]
         public void CanRemoveWithoutBreakingRandom() 
@@ -34,16 +35,19 @@ namespace depression
             for (int i = 0; i < 50; i++)
             {
                 int num = rand.Next(0, 100);
+                while(ints.Contains(num))
+                {
+                    num = rand.Next(0, 100);
+                }
                 red.Insert(num);
                 ints.Add(num);
             }
+            List<int> ints1 = red.InOrder();
+            ;
             bool didFail = false;
             for (int i = 0; i < 50; i++)
             {
-                if(i == 19)
-                {
-
-                }
+                
                 int index = rand.Next(0, ints.Count);
                 red.Remove(red.Search(ints[index]));
                 ints.Remove(ints[index]);

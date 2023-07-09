@@ -72,17 +72,17 @@ namespace RedBlackTree
                 return !HasRight && HasLeft;
             }
         }
-        public TypeOfNode NodeType 
+        public TypeOfNode NodeType
         {
             get
             {
                 if (HasNoChildren) return TypeOfNode.Leaf;
-                
+
                 if (!IsRed && hasTwoChildren && !RightChild.IsRed && !LeftChild.IsRed)
                 {
                     return TypeOfNode.TwoNode;
                 }
-                if ( hasTwoChildren && RightChild.IsRed && LeftChild.IsRed)
+                if (hasTwoChildren && RightChild.IsRed && LeftChild.IsRed)
                 {
                     return TypeOfNode.FourNode;
                 }
@@ -95,7 +95,7 @@ namespace RedBlackTree
             Value = value;
             IsRed = isRed;
         }
-        
+
     }
 
     public class RedBlack<T> where T : IComparable<T>
@@ -105,26 +105,16 @@ namespace RedBlackTree
         void FlipColor(Node<T> node)
         {
             node.IsRed = !node.IsRed;
-            if(node.HasLeft)
+            if (node.HasLeft)
             {
                 node.LeftChild.IsRed = !node.LeftChild.IsRed;
             }
-            if(node.HasRight)
+            if (node.HasRight)
             {
                 node.RightChild.IsRed = !node.RightChild.IsRed;
             }
         }
-        void InsertValue(Node<T> Current, T Value)
-        {
-            if (Current.Value.CompareTo(Value) > 0)
-            {
-                Current.LeftChild = new Node<T>(Value);
-            }
-            else if (Current.Value.CompareTo(Value) <= 0)
-            {
-                Current.RightChild = new Node<T>(Value);
-            }
-        }
+        
         Node<T> RotateLeft(Node<T> CurNode)
         {
             Node<T> temp = CurNode.RightChild;
@@ -133,7 +123,7 @@ namespace RedBlackTree
             CurNode.RightChild = temp2;
             bool orig = temp.IsRed;
             temp.IsRed = CurNode.IsRed;
-            CurNode.IsRed = orig;
+            CurNode.IsRed = true;
             return temp;
         }
         Node<T> RotateRight(Node<T> CurNode)
@@ -142,18 +132,17 @@ namespace RedBlackTree
             Node<T> temp2 = CurNode.LeftChild.RightChild;
             temp.RightChild = CurNode;
             CurNode.LeftChild = temp2;
-            bool orig = temp.IsRed;
             temp.IsRed = CurNode.IsRed;
-            CurNode.IsRed = orig;
+            CurNode.IsRed = true;
             return temp;
         }
         private Node<T> RotatingChecks(Node<T> Current)
         {
-            if (Current.NodeType != TypeOfNode.FourNode && Current.HasRight && Current.RightChild.IsRed)  //Rotating To Be LeftLeaning
+            if (Current.NodeType != TypeOfNode.FourNode && IsRed(Current.RightChild))  //Rotating To Be LeftLeaning
             {
                 Current = RotateLeft(Current);
             }
-            if (Current.HasLeft && Current.LeftChild.LeftChild != null && Current.LeftChild.IsRed && Current.LeftChild.LeftChild.IsRed)
+            if (IsRed(Current.LeftChild) && IsRed(Current.LeftChild.LeftChild))
             {
                 Current = RotateRight(Current);
             }
@@ -161,26 +150,22 @@ namespace RedBlackTree
         }
         private Node<T> GoThroughTree(Node<T> Current, T Value)
         {
-
-            if (Current.IsRed == false && Current.HasLeft && Current.HasRight && Current.LeftChild.IsRed == true && Current.RightChild.IsRed == true)
+            if(Current == null)
+            {
+                return new Node<T>(Value);
+            }
+            if (Current.NodeType == TypeOfNode.FourNode)
             {
                 FlipColor(Current);
             }
-            if (Current.LeftChild != null && Current.Value.CompareTo(Value) > 0)
+            if (Current.Value.CompareTo(Value) > 0)
             {
                 Current.LeftChild = GoThroughTree(Current.LeftChild, Value);
             }
-            else if (Current.RightChild != null && Current.Value.CompareTo(Value) <= 0)
+            else if (Current.Value.CompareTo(Value) < 0)
             {
                 Current.RightChild = GoThroughTree(Current.RightChild, Value);
-            }
-            else
-            {
-                InsertValue(Current, Value);
-                Current = RotatingChecks(Current);
-                return Current;
-            }
-            //Rotating to Balance
+            }           
             Current = RotatingChecks(Current);
 
 
@@ -196,81 +181,52 @@ namespace RedBlackTree
             }
             Root = GoThroughTree(Root, value);
             Count++;
-            if (Root.IsRed) Root.IsRed = false;
-            if (!TreeValidation())
-            {
-                //throw new Exception();
-            }
+            Root.IsRed = false;
+            
         }
+
         private Node<T> FixUp(Node<T> Current)
         {
-            
-            if (Current.NodeType == TypeOfNode.FourNode || (Current.IsRed && Current.hasTwoChildren && Current.RightChild.IsRed && !Current.LeftChild.IsRed))
+            Current = RotatingChecks(Current);
+            if (Current.NodeType == TypeOfNode.FourNode)
             {
                 FlipColor(Current);
             }
-           
-
-            //Special CaseRotationChecks
-            if (Current.NodeType != TypeOfNode.FourNode && Current.HasRight && Current.RightChild.IsRed)
-            {
-                Current = RotateLeft(Current);
-            }
-            if (Current.HasOnlyRight && Current.RightChild.hasTwoChildren && Current.RightChild.NodeType == TypeOfNode.FourNode)
-            {
-                FlipColor(Current.RightChild);
-                Current = RotateLeft(Current);
-            }
-            if (Current.HasOnlyLeft && Current.LeftChild.HasOnlyLeft && Current.LeftChild.LeftChild.HasNoChildren
-                && !(Current.LeftChild.IsRed && Current.LeftChild.LeftChild.IsRed))
-            {
-                Current = RotateRight(Current);
-                if (Current.RightChild.IsRed) Current.RightChild.IsRed = false;
-                if (Current.LeftChild.IsRed) Current.LeftChild.IsRed = false;
-            }
-            if (Current.HasRight && !Current.HasLeft && Current.RightChild.HasLeft && !Current.RightChild.HasRight)
-            {
-                Current.RightChild = RotateRight(Current.RightChild);
-                Current = RotateLeft(Current);
-                if (Current.RightChild.IsRed)
-                {
-                    Current.RightChild.IsRed = false;
-                }
-            }
-            if (Current.HasLeft && Current.LeftChild.HasRight && Current.LeftChild.NodeType != TypeOfNode.FourNode && Current.LeftChild.RightChild.IsRed)
+            if (Current.HasLeft && IsRed(Current.LeftChild.RightChild) && !IsRed(Current.LeftChild.LeftChild))
             {
                 Current.LeftChild = RotateLeft(Current.LeftChild);
+                if (IsRed(Current.LeftChild))
+                {
+                    Current = RotateRight(Current);
+                }
             }
-            Current = RotatingChecks(Current);
-            
-            if (Current.hasTwoChildren && Current.LeftChild.HasNoChildren && Current.RightChild.HasNoChildren
-                && Current.NodeType == TypeOfNode.ThreeNode)
-            {
-                Current.LeftChild.IsRed = false;
-            }
-            
             return Current;
+        }
+        public bool IsRed(Node<T> Node)
+        {
+            if (Node == null) return false;
+            return Node.IsRed;
         }
         public Node<T> Search(T Value)
         {
             Node<T> cur = Root;
-            if(Root.Value.Equals(Value))
+            if (Root.Value.Equals(Value))
             {
                 return Root;
             }
-            while(!cur.HasNoChildren)
+            while (!cur.HasNoChildren)
             {
-                if(cur.Value.Equals(Value))
+                if (cur.Value.Equals(Value))
                 {
                     return cur;
                 }
-                if(cur.HasLeft && cur.Value.CompareTo(Value) > 0)
+                if (cur.HasLeft && cur.Value.CompareTo(Value) > 0)
                 {
                     cur = cur.LeftChild;
                 }
-                else if(cur.HasRight && cur.Value.CompareTo(Value) <= 0)
+                else if (cur.HasRight && cur.Value.CompareTo(Value) <= 0)
                 {
-                    cur = cur.RightChild; 
+                    cur = cur.RightChild;
                 }
             }
             if (cur.Value.Equals(Value))
@@ -288,7 +244,7 @@ namespace RedBlackTree
             if (node != null)
             {
                 Root = RecursiveRemove(Root, node);
-                if (Root.IsRed) Root.IsRed = false;
+                Root.IsRed = false;
                 Count--;
                 return true;
             }
@@ -297,12 +253,12 @@ namespace RedBlackTree
         private Node<T> MoveRedLeft(Node<T> Current)
         {
             FlipColor(Current);
-            if(Current.HasRight && Current.RightChild.HasLeft && Current.RightChild.IsRed && Current.RightChild.LeftChild.IsRed)
+            if (IsRed(Current.RightChild.LeftChild))
             {
                 Current.RightChild = RotateRight(Current.RightChild);
                 Current = RotateLeft(Current);
                 FlipColor(Current);
-                if(Current.RightChild.RightChild.IsRed)
+                if (IsRed(Current.RightChild.RightChild))
                 {
                     Current.RightChild = RotateLeft(Current.RightChild);
                 }
@@ -311,31 +267,45 @@ namespace RedBlackTree
         }
         private Node<T> MoveRedRight(Node<T> Current)
         {
-            if(!Current.LeftChild.LeftChild.IsRed)
+            FlipColor(Current);
+            if (IsRed(Current.LeftChild.LeftChild))
             {
+                Current = RotateRight(Current);
                 FlipColor(Current);
-                return Current;
             }
-            FlipColor(Current);
-            Current = RotateRight(Current);
-            FlipColor(Current);
+
             return Current;
         }
         private Node<T> FindMinimumNode(Node<T> Node)
-        {   
-            while(Node.HasLeft)
+        {
+            while (Node.HasLeft)
             {
                 Node = Node.LeftChild;
             }
             return Node;
         }
-              
+        public List<T> InOrder()
+        {
+            List<T> temp = new List<T>();
+            inorder(Root, temp);
+            return temp;
+        }
+        private void inorder(Node<T> Current,List<T> Values)
+        {
+            if (Current == null) return;
+            inorder(Current.LeftChild,Values);
+            Values.Add(Current.Value);
+            inorder(Current.RightChild,Values);
+        }
+            
+
+
         private Node<T> RecursiveRemove(Node<T> Current, Node<T> NodeToLookFor)
         {
             //Go Left
             if (Current.HasLeft && NodeToLookFor.Value.CompareTo(Current.Value) < 0)
             {
-                if(Current.LeftChild.NodeType == TypeOfNode.TwoNode)
+                if (!IsRed(Current.LeftChild) && !IsRed(Current.LeftChild.LeftChild))
                 {
                     Current = MoveRedLeft(Current);
                 }
@@ -343,21 +313,18 @@ namespace RedBlackTree
             }
 
             //Go Right or current is the one to delete
-            else if (NodeToLookFor.Value.CompareTo(Current.Value) > 0 || Current == NodeToLookFor)
+            else
             {
-                if(Current.HasLeft && Current.LeftChild.LeftChild != null && Current.LeftChild.IsRed && Current.LeftChild.LeftChild.IsRed)
+                if (IsRed(Current.LeftChild))
                 {
-                    Node<T> CopyOfCur = Current;
                     Current = RotateRight(Current);
-                    if(CopyOfCur == Root) Root = Current;
-                   
                 }
                 if (Current.HasNoChildren && Current == NodeToLookFor) return null;
-                
-                
+
+
                 if (Current.HasRight && NodeToLookFor.Value.CompareTo(Current.Value) > 0)
                 {
-                    if (Current.RightChild.NodeType == TypeOfNode.TwoNode)// if right child is a 2-node
+                    if (!IsRed(Current.RightChild) && !IsRed(Current.RightChild.LeftChild))// if right child is a 2-node
                     {
                         Current = MoveRedRight(Current);
                     }
@@ -365,27 +332,22 @@ namespace RedBlackTree
                 }
                 else
                 {
-                    if (Current.RightChild.NodeType == TypeOfNode.TwoNode)// if right child is a 2-node
+                    // this check shouldn't be here
+                    if (!IsRed(Current.RightChild) && !IsRed(Current.RightChild.LeftChild))// if right child is a 2-node
                     {
                         Current = MoveRedRight(Current);
                     }
-
-                   
-                    
                     Node<T> MinimumNode = FindMinimumNode(Current.RightChild);
                     T temp = NodeToLookFor.Value;
                     NodeToLookFor.Value = MinimumNode.Value;
                     MinimumNode.Value = temp;
-                    NodeToLookFor = MinimumNode;
-                    
-                    Current.RightChild = RecursiveRemove(Current.RightChild, NodeToLookFor);
-                    
-                    Current = FixUp(Current);
-                    return Current;
+
+                    Current.RightChild = RecursiveRemove(Current.RightChild, MinimumNode);
+
+                    return FixUp(Current);
                 }
             }
-            Current = FixUp(Current);
-            return Current;
+            return FixUp(Current);
         }
 
         //Below is the validation functions
@@ -399,14 +361,14 @@ namespace RedBlackTree
             {
                 return TargetValue == CurrentValue;
             }
-            
+
             bool one = true;
             bool two = true;
             if (Current.HasLeft)
             {
                 one = RecursiveForFour(Current.LeftChild, TargetValue, CurrentValue);
             }
-            if (Current.HasRight) 
+            if (Current.HasRight)
             {
                 two = RecursiveForFour(Current.RightChild, TargetValue, CurrentValue);
             }
@@ -419,10 +381,10 @@ namespace RedBlackTree
             //do recursion and compare current to target value
             int TargetValue = 0;
             Node<T> temp = Root;
-            while(temp != null)
+            while (temp != null)
             {
-                if(!temp.IsRed) TargetValue++;
-                if(temp.HasLeft)
+                if (!temp.IsRed) TargetValue++;
+                if (temp.HasLeft)
                 {
                     temp = temp.LeftChild;
                 }
@@ -433,7 +395,7 @@ namespace RedBlackTree
 
             }
             bool thing = RecursiveForFour(Root, TargetValue, 0);
-            if(!thing)
+            if (!thing)
             {
 
             }
@@ -460,7 +422,7 @@ namespace RedBlackTree
                 if (current.RightChild != null)
                 {
                     //Rule 3.If a node is red, then its children are black(therefore, red cannot touch red).
-                    if (current.IsRed && current.RightChild.IsRed) 
+                    if (current.IsRed && current.RightChild.IsRed)
                     {
                         return false;
                     }
@@ -469,30 +431,30 @@ namespace RedBlackTree
                 //Rule 5 check if 3 NODES are rightleaning
                 if (((!current.HasLeft) || (current.HasLeft && !current.LeftChild.IsRed)) && current.HasRight && current.RightChild.IsRed)
                 {
-                    return false;   
+                    return false;
                 }
-                
+
             }
             return true;
         }
-        
-        
+
+
         public bool TreeValidation()
         {
-            bool Rule3 = RuleThreeCheck(); 
+            bool Rule3 = RuleThreeCheck();
             ;
             bool Rule4 = RuleFourValidation();
             ;
-            if(!Rule3)
+            if (!Rule3)
             {
 
             }
-            if(!Rule4)
+            if (!Rule4)
             {
 
             }
             return !Root.IsRed && Rule3 && Rule4;
         }
-        
+
     }
 }
