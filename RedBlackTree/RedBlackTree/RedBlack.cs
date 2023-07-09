@@ -244,7 +244,7 @@ namespace RedBlackTree
             if (node != null)
             {
                 Root = RecursiveRemove(Root, node);
-                Root.IsRed = false;
+                if(Root != null) Root.IsRed = false;
                 Count--;
                 return true;
             }
@@ -321,22 +321,16 @@ namespace RedBlackTree
                 }
                 if (Current.HasNoChildren && Current == NodeToLookFor) return null;
 
-
-                if (Current.HasRight && NodeToLookFor.Value.CompareTo(Current.Value) > 0)
+                if (!IsRed(Current.RightChild) && !IsRed(Current.RightChild.LeftChild))// if right child is a 2-node
                 {
-                    if (!IsRed(Current.RightChild) && !IsRed(Current.RightChild.LeftChild))// if right child is a 2-node
-                    {
-                        Current = MoveRedRight(Current);
-                    }
+                    Current = MoveRedRight(Current);
+                }
+                if (Current.HasRight && NodeToLookFor.Value.CompareTo(Current.Value) > 0)
+                {   
                     Current.RightChild = RecursiveRemove(Current.RightChild, NodeToLookFor);
                 }
-                else
+                else 
                 {
-                    // this check shouldn't be here
-                    if (!IsRed(Current.RightChild) && !IsRed(Current.RightChild.LeftChild))// if right child is a 2-node
-                    {
-                        Current = MoveRedRight(Current);
-                    }
                     Node<T> MinimumNode = FindMinimumNode(Current.RightChild);
                     T temp = NodeToLookFor.Value;
                     NodeToLookFor.Value = MinimumNode.Value;
@@ -441,6 +435,8 @@ namespace RedBlackTree
 
         public bool TreeValidation()
         {
+            if (Root == null && Count == 0) return true;
+
             bool Rule3 = RuleThreeCheck();
             ;
             bool Rule4 = RuleFourValidation();

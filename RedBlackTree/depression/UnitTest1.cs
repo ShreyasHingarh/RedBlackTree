@@ -1,8 +1,8 @@
 
 using RedBlackTree;
-namespace depression
+namespace UnitTesting
 {
-    public class UnitTest1 
+    public class UnitTesting 
     {
         
         
