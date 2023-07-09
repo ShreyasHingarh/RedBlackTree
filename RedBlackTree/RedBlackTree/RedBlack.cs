@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -98,10 +99,16 @@ namespace RedBlackTree
 
     }
 
-    public class RedBlack<T> where T : IComparable<T>
+    public class RedBlack<T> : ISortedSet<RedBlack<T>, T>
+        where T : IComparable<T>
     {
         public int Count;
         public Node<T> Root;
+
+        public IComparer<T> Comparer => Comparer<T>.Default;
+
+        int ISortedSet<T>.Count => Count;
+        #region Helper Funcs
         void FlipColor(Node<T> node)
         {
             node.IsRed = !node.IsRed;
@@ -114,7 +121,6 @@ namespace RedBlackTree
                 node.RightChild.IsRed = !node.RightChild.IsRed;
             }
         }
-        
         Node<T> RotateLeft(Node<T> CurNode)
         {
             Node<T> temp = CurNode.RightChild;
@@ -135,72 +141,6 @@ namespace RedBlackTree
             temp.IsRed = CurNode.IsRed;
             CurNode.IsRed = true;
             return temp;
-        }
-        private Node<T> RotatingChecks(Node<T> Current)
-        {
-            if (Current.NodeType != TypeOfNode.FourNode && IsRed(Current.RightChild))  //Rotating To Be LeftLeaning
-            {
-                Current = RotateLeft(Current);
-            }
-            if (IsRed(Current.LeftChild) && IsRed(Current.LeftChild.LeftChild))
-            {
-                Current = RotateRight(Current);
-            }
-            return Current;
-        }
-        private Node<T> GoThroughTree(Node<T> Current, T Value)
-        {
-            if(Current == null)
-            {
-                return new Node<T>(Value);
-            }
-            if (Current.NodeType == TypeOfNode.FourNode)
-            {
-                FlipColor(Current);
-            }
-            if (Current.Value.CompareTo(Value) > 0)
-            {
-                Current.LeftChild = GoThroughTree(Current.LeftChild, Value);
-            }
-            else if (Current.Value.CompareTo(Value) < 0)
-            {
-                Current.RightChild = GoThroughTree(Current.RightChild, Value);
-            }           
-            Current = RotatingChecks(Current);
-
-
-            return Current;
-        }
-        public void Insert(T value)
-        {
-            if (Root == null)
-            {
-                Root = new Node<T>(value, false);
-                Count++;
-                return;
-            }
-            Root = GoThroughTree(Root, value);
-            Count++;
-            Root.IsRed = false;
-            
-        }
-
-        private Node<T> FixUp(Node<T> Current)
-        {
-            Current = RotatingChecks(Current);
-            if (Current.NodeType == TypeOfNode.FourNode)
-            {
-                FlipColor(Current);
-            }
-            if (Current.HasLeft && IsRed(Current.LeftChild.RightChild) && !IsRed(Current.LeftChild.LeftChild))
-            {
-                Current.LeftChild = RotateLeft(Current.LeftChild);
-                if (IsRed(Current.LeftChild))
-                {
-                    Current = RotateRight(Current);
-                }
-            }
-            return Current;
         }
         public bool IsRed(Node<T> Node)
         {
@@ -234,21 +174,6 @@ namespace RedBlackTree
                 return cur;
             }
             return null;
-        }
-        private bool Contains(T Value)
-        {
-            return Search(Value) != null;
-        }
-        public bool Remove(Node<T> node)
-        {
-            if (node != null)
-            {
-                Root = RecursiveRemove(Root, node);
-                if(Root != null) Root.IsRed = false;
-                Count--;
-                return true;
-            }
-            return false;
         }
         private Node<T> MoveRedLeft(Node<T> Current)
         {
@@ -290,16 +215,72 @@ namespace RedBlackTree
             inorder(Root, temp);
             return temp;
         }
-        private void inorder(Node<T> Current,List<T> Values)
+        private void inorder(Node<T> Current, List<T> Values)
         {
             if (Current == null) return;
-            inorder(Current.LeftChild,Values);
+            inorder(Current.LeftChild, Values);
             Values.Add(Current.Value);
-            inorder(Current.RightChild,Values);
+            inorder(Current.RightChild, Values);
         }
-            
+        private Node<T> FixUp(Node<T> Current)
+        {
+            if (Current.NodeType != TypeOfNode.FourNode && IsRed(Current.RightChild))  //Rotating To Be LeftLeaning
+            {
+                Current = RotateLeft(Current);
+            }
+            if (IsRed(Current.LeftChild) && IsRed(Current.LeftChild.LeftChild))
+            {
+                Current = RotateRight(Current);
+            }
+            if (Current.NodeType == TypeOfNode.FourNode)
+            {
+                FlipColor(Current);
+            }
+            if (Current.HasLeft && IsRed(Current.LeftChild.RightChild) && !IsRed(Current.LeftChild.LeftChild))
+            {
+                Current.LeftChild = RotateLeft(Current.LeftChild);
+                if (IsRed(Current.LeftChild))
+                {
+                    Current = RotateRight(Current);
+                }
+            }
+            return Current;
+        }
+        #endregion 
+        //Insert Functions
+        private Node<T> GoThroughTree(Node<T> Current, T Value)
+        {
+            if(Current == null)
+            {
+                return new Node<T>(Value);
+            }
+            if (Current.NodeType == TypeOfNode.FourNode)
+            {
+                FlipColor(Current);
+            }
+            if (Current.Value.CompareTo(Value) > 0)
+            {
+                Current.LeftChild = GoThroughTree(Current.LeftChild, Value);
+            }
+            else if (Current.Value.CompareTo(Value) < 0)
+            {
+                Current.RightChild = GoThroughTree(Current.RightChild, Value);
+            }
+            //Rotation Checks
+            if (Current.NodeType != TypeOfNode.FourNode && IsRed(Current.RightChild))  //Rotating To Be LeftLeaning
+            {
+                Current = RotateLeft(Current);
+            }
+            if (IsRed(Current.LeftChild) && IsRed(Current.LeftChild.LeftChild))
+            {
+                Current = RotateRight(Current);
+            }
 
-
+            return Current;
+        }
+        
+        //Remove Functions
+       
         private Node<T> RecursiveRemove(Node<T> Current, Node<T> NodeToLookFor)
         {
             //Go Left
@@ -431,8 +412,6 @@ namespace RedBlackTree
             }
             return true;
         }
-
-
         public bool TreeValidation()
         {
             if (Root == null && Count == 0) return true;
@@ -451,6 +430,210 @@ namespace RedBlackTree
             }
             return !Root.IsRed && Rule3 && Rule4;
         }
+        public void Clear()
+        {
+            Root = null;
+        }
 
+        public bool Add(T item)
+        {
+            if (Root == null)
+            {
+                Root = new Node<T>(item, false);
+                Count++;
+                return true;
+            }
+            Root = GoThroughTree(Root, item);
+            Count++;
+            Root.IsRed = false;
+            return true;
+        }
+
+        public void AddRange(IEnumerable<T> items)
+        {
+            foreach(var item in items)
+            {
+                Add(item);
+            }
+        }
+
+        bool ISortedSet<T>.Contains(T item)
+        {
+            return Search(item) != null;
+        }
+
+        public bool Remove(T item)
+        {
+            Node<T> temp = Search(item);
+            if (temp != null)
+            {
+                Root = RecursiveRemove(Root, temp);
+                if (Root != null) Root.IsRed = false;
+                Count--;
+                return true;
+            }
+            return false;
+        }
+
+        public T Max()
+        {
+            Node<T> temp = Root;
+            while (temp.HasRight)
+            {
+                temp = temp.RightChild;
+            }
+            return temp.Value;
+        }
+
+        public T Min()
+        {
+            Node<T> temp = FindMinimumNode(Root);
+            return temp.Value;
+        }
+
+        private Node<T> ceiling(Node<T> Current, T item, Node<T> Previous)
+        {
+            if (Current.Value.Equals(item)) return Current;
+            if (Current.HasLeft && item.CompareTo(Current.Value) < 0)
+            {
+                ceiling(Current.LeftChild, item, Current);
+            }
+            else if(Current.HasNoChildren)
+            {
+                return Current;
+            }
+
+        }
+        public T Ceiling(T item)
+        {
+            if (Max().CompareTo(item) < 0)
+            {
+                return Max();
+            }
+            return ceiling(Root, item,Root).Value;
+        }
+        
+        public T Floor(T item)
+        {
+            throw new NotImplementedException();
+        }
+
+        ISortedSet<T> ISortedSet<T>.Union(ISortedSet<T> other) => Union(other);
+
+        ISortedSet<T> ISortedSet<T>.Intersection(ISortedSet<T> other) => Intersection(other);
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            throw new NotImplementedException();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            throw new NotImplementedException();
+        }
+
+        public RedBlack<T> Union(ISortedSet<T> other)
+        {
+            RedBlack<T> values = new RedBlack<T>();
+            List<T> nodes = InOrder();
+            AddRange(nodes);
+            AddRange(other);
+            return values;
+        }
+
+        public RedBlack<T> Intersection(ISortedSet<T> other)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
+/*
+ * 
+class Hooray : IEnumerable<int> // > array
+{
+    public struct Enumerator : IEnumerator<int>
+    {
+        int state;
+        Hooray hiphip;
+        
+        public Enumerator(Hooray myHooray)
+        {
+            state = 0;
+            hiphip = myHooray;
+        }
+
+        public int Current {get; private set;}
+
+        object IEnumerator.Current => Current;
+
+        public void Dispose() {}        
+
+        public bool MoveNext()
+        {
+            switch (++state)
+            {
+                case 1:
+                    Current = hiphip.item1;
+                    break;
+                case 2:
+                    Current = hiphip.item2;
+                    break;
+                case 3:
+                    Current = hiphip.item3;
+                    break;
+                case 4:
+                    Current = hiphip.item4;
+                    break;
+                case 5:
+                    Current = hiphip.item5;
+                    break;
+                default: return false;                    
+            }
+            return true;
+        }
+
+        public void Reset()
+        {
+            state = 0;
+        }
+    }
+    
+    int item1;
+    int item2;
+    int item3;
+    int item4;
+    int item5;
+       
+    public Hooray(int i1, int i2, int i3, int i4, int i5)
+    {
+        item1 = i1;
+        item2 = i2;
+        item3 = i3;
+        item4 = i4;
+        item5 = i5;
+    }
+    
+    public IEnumerator<int> GetEnumerator() => new Enumerator(this);
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+}
+
+public class C {
+    
+    public static void Main() 
+    {
+        Hooray hip = new Hooray(5, 10, 15, 20, 25);
+        var a = hip.GetEnumerator();
+        while (a.MoveNext())
+        {
+            var number = a.Current;
+            Console.WriteLine(number);
+        }
+        
+        foreach (var item in hip)
+        {
+            Console.WriteLine(item)   
+        }
+            
+    }
+}
+ * */
